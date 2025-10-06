@@ -24,6 +24,9 @@ from astral.sun import dawn, dusk
 from astral import moon
 import pytz
 
+moonset_error = False
+moonrise_error = False
+
 
 # --- Configuration for Tucson, AZ ---
 TUCSON = LocationInfo(
@@ -147,6 +150,9 @@ def unicode_moon(illum_frac: float, waxing: bool, width: int = 23, height: int =
 
 
 def main():
+    global moonset_error
+    global moonrise_error
+
     now_local = local_now()
     today_local = now_local.date()
 
@@ -179,8 +185,15 @@ def main():
     )
 
     # Moonrise & Moonset
-    moonrise = moon.moonrise(TUCSON.observer, date=today_local, tzinfo=PHOENIX_TZ)
-    moonset = moon.moonset(TUCSON.observer, date=today_local, tzinfo=PHOENIX_TZ)
+    try:
+        moonrise = moon.moonrise(TUCSON.observer, date=today_local, tzinfo=PHOENIX_TZ)
+    except Exception:
+        moonrise_error = True
+        
+    try:
+        moonset = moon.moonset(TUCSON.observer, date=today_local, tzinfo=PHOENIX_TZ)
+    except Exception:
+        moonset_error = True
 
     # Output
     print(f"Location: {TUCSON.name}, {TUCSON.region}  (TZ: {TUCSON.timezone})")
@@ -200,8 +213,15 @@ def main():
     print(f"  Start (astronomical dawn): {astro_dawn.strftime('%Y-%m-%d %H:%M:%S %Z') if astro_dawn else 'N/A'}")
     print()
     print("Moon events (today):")
-    print(f"  Moonrise: {moonrise.strftime('%Y-%m-%d %H:%M:%S %Z') if moonrise else 'N/A'}")
-    print(f"  Moonset : {moonset .strftime('%Y-%m-%d %H:%M:%S %Z') if moonset  else 'N/A'}")
+    if moonrise_error == True:
+        print("  Moon does not rise")
+    else:
+        print(f"  Moonrise: {moonrise.strftime('%Y-%m-%d %H:%M:%S %Z') if moonrise else 'N/A'}")
+        
+    if moonset_error == True:
+        print("  Moon does not set")
+    else:
+        print(f"  Moonset : {moonset .strftime('%Y-%m-%d %H:%M:%S %Z') if moonset  else 'N/A'}")
     
     input("")
 
